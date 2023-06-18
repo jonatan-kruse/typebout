@@ -100,12 +100,14 @@ export class PersonalGame {
   private graphData: { wpm: number, rawWpm: number, time: number }[] = []
   private wordCompletionTimes: number[] = []
   private quote: Quotes
+  private mistakeIndices: number[] = []
   private splitQuoteContent: string[]
   private currentWordIndex = 0
   private current: number = 0
   private mistakes: number = 0
   private mistakeWords: string[] = []
   public endGameStats: null | EndGameStats = null
+
 
   private finishedCallback: (personalGame: PersonalGame) => Promise<void>
 
@@ -159,7 +161,7 @@ export class PersonalGame {
       throw new Error('Cannot retrieve end of game stats')
     }
     const { username, wpm } = this.getInformation()
-    const { current, mistakes, mistakeWords, graphData } = this
+    const { current, mistakes, mistakeWords, graphData, mistakeIndices } = this
     const correct = current - mistakes
     this.endGameStats = {
       username,
@@ -172,31 +174,22 @@ export class PersonalGame {
       placement: this.group!.personalGames.filter((personalGame) =>
         personalGame.hasFinished()
       ).length,
-      graphData
+      graphData,
+      mistakeIndices
     }
   }
 
   public setMistakes = (mistakesObj: MistakeProps) => {
-    const { mistakeWords, mistakes } = mistakesObj
+    const { mistakeIndices, mistakes } = mistakesObj
     this.mistakes = mistakes
-    this.mistakeWords = mistakeWords
+    this.mistakeWords = mistakeIndices.map(
+      (mistakeIndex) => this.splitQuoteContent[mistakeIndex]
+    )
+    this.mistakeIndices = mistakeIndices
   }
 
   public receiveWord = (receivedWord: string) => {
     const currentWord = this.splitQuoteContent[this.currentWordIndex]
-
-    if (receivedWord !== currentWord) {
-      this.mistakes++
-
-      // If we have not Already hade a mistake on this word,
-      // add it to the list of mistaken words
-      const lastMistakenWord = this.mistakeWords[this.mistakeWords.length - 1]
-      if (lastMistakenWord !== currentWord) {
-        this.mistakeWords.push(currentWord)
-      }
-
-      return false
-    }
 
     this.currentWordIndex += 1
     this.current += currentWord.length

@@ -24,11 +24,12 @@ export interface EndGameStats {
   mistakeWords: string[]
   placement: number
   graphData: { wpm: number; rawWpm: number; time: number }[]
+  mistakeIndices: number[]
 }
 
 export interface MistakeProps {
   mistakes: number
-  mistakeWords: string[]
+  mistakeIndices: number[]
 }
 
 export interface Quote {

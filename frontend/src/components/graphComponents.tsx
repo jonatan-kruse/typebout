@@ -8,7 +8,9 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
-  Legend
+  Legend,
+  ComposedChart,
+  Scatter
 } from 'recharts'
 
 interface SingleGraphProps {
@@ -28,26 +30,31 @@ export const SingleGraph: React.FC<SingleGraphProps> = ({
   maxWpm,
   completionTimes
 }) => {
+  console.log(chosenEndgameStats.mistakeIndices)
   return (
     <ResponsiveContainer width="100%" height={250}>
-      <LineChart data={chosenEndgameStats.graphData}>
+      <ComposedChart data={chosenEndgameStats.graphData}>
         <XAxis
           dataKey="time"
           type="number"
           ticks={timeTicks}
           domain={[Math.min(...completionTimes), Math.max(...completionTimes)]}
         />
-        <YAxis domain={[minWpm - 5, maxWpm + 5]} ticks={wpmTicks} />
+        <YAxis domain={[minWpm - 5, maxWpm + 5]} ticks={wpmTicks} dataKey="y" />
         <Tooltip />
         <CartesianGrid stroke="#70707010" />
         <Legend />
-        <Line
-          type="monotone"
-          dataKey="rawWpm"
-          stroke="#82ca9d60"
-          strokeWidth={2}
-          dot={false}
-          name="Raw WPM"
+        <Scatter
+          shape="triangle"
+          legendType="triangle"
+          fill="#ff0000"
+          line={false}
+          name="Mistake"
+          data={chosenEndgameStats.graphData.map(({ wpm, time }, i) =>
+            chosenEndgameStats.mistakeIndices.includes(i)
+              ? { y: wpm, time }
+              : { y: null, time }
+          )}
         />
         <Line
           type="monotone"
@@ -57,7 +64,15 @@ export const SingleGraph: React.FC<SingleGraphProps> = ({
           dot={false}
           name="WPM"
         />
-      </LineChart>
+        <Line
+          type="monotone"
+          dataKey="rawWpm"
+          stroke="#82ca9d60"
+          strokeWidth={2}
+          dot={false}
+          name="Raw WPM"
+        />
+      </ComposedChart>
     </ResponsiveContainer>
   )
 }

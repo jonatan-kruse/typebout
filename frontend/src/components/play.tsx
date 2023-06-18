@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 import useAuth from '@/providers/useAuth'
 import {
   Quote,
@@ -100,10 +100,7 @@ export default function PlayGame({
   handlePlayAgain,
   canRestartGame
 }: PlayGameProps) {
-  // I don't get this part, splitContent is never changed so why is it a state?
-  const [splitContent, setSplitContent] = useState<string[]>(
-    splitStringIncludeSpaces(quote.content)
-  )
+  const splitContent = splitStringIncludeSpaces(quote.content)
   const [completedContent, setCompletedContent] = useState('')
   const [currentWord, setCurrentWord] = useState(splitContent[0])
   const [upComingContent, setUpComingContent] = useState(
@@ -114,9 +111,10 @@ export default function PlayGame({
   const [completed, setCompleted] = useState(false)
   const [wpmHistories, setWpmHistories] = useState<Record<string, number[]>>({})
   const inputRef = useRef<HTMLInputElement>(null)
+  const currentWordIndex = useRef(0)
 
   let mistakes = useRef(0)
-  let mistakeWords = useRef<string[]>([])
+  let mistakeWordIndices = useRef<number[]>([])
 
   useEffect(() => {
     gameInfoArr.forEach((gameInfo) => {
@@ -175,10 +173,8 @@ export default function PlayGame({
 
     if (newWrongIndex > wrongIndex) {
       mistakes.current++
-      const latestMistakeWord =
-        mistakeWords.current[mistakeWords.current.length - 1]
-      if (currentWord !== latestMistakeWord) {
-        mistakeWords.current.push(currentWord)
+      if (!mistakeWordIndices.current.includes(currentWordIndex.current)) {
+        mistakeWordIndices.current.push(currentWordIndex.current)
       }
     }
 
@@ -187,12 +183,8 @@ export default function PlayGame({
       document.getElementById('input-form')?.reset()
       const newCompletedContent = completedContent + currentWord
       setCompletedContent(newCompletedContent)
-      setCurrentWord(upComingContent[0])
-
-      const tmp = upComingContent
-      tmp.shift()
-      setUpComingContent(tmp)
-
+      currentWordIndex.current++
+      setCurrentWord(splitContent[currentWordIndex.current])
       setCorrectIndex(-1)
       setWrongIndex(-1)
 
@@ -201,7 +193,7 @@ export default function PlayGame({
         setCompleted(true)
         onCorrectWord(input, {
           mistakes: mistakes.current,
-          mistakeWords: mistakeWords.current
+          mistakeIndices: mistakeWordIndices.current
         })
         return
       }
@@ -227,7 +219,7 @@ export default function PlayGame({
           <GameText
             completedContent={completedContent}
             currentWord={currentWord}
-            upComingContent={upComingContent}
+            upComingContent={splitContent.slice(currentWordIndex.current + 1)}
             correctIndex={correctIndex}
             wrongIndex={wrongIndex}
             splitContent={splitContent}
